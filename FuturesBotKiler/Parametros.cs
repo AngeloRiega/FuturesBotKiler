@@ -1,15 +1,11 @@
-﻿namespace FuturesBotKiler
+﻿using FuturesBotKiler.Models;
+
+namespace FuturesBotKiler
 {
     public class Parametros
     {
         /*Binance*/
-        public static int Etapa = 0;
-        public static decimal Quantity = 40; //CANTIDAD EN USD CONSIDERANDO EL LEVERAGE
-        public static int ClientId = 1; //USAR 0 PARA REINICIAR EL ID Y 1 PARA CONTINUAR
-        public static decimal MarketPriceOrdenBot; //OBTENGO PRECIO MARKET DE LA ORDEN RECIEN CREADA
-        public static string Symbol = "BTCUSDT";
-        public static decimal PorcentajeTakeProfit = 0.15m;
-        public static decimal PorcentajeStopLoss = 0.15m;
+        public static Dictionary<int, Orden> Ordenes = new Dictionary<int, Orden>();
 
         /*Binance*/
         public static readonly string BinanceKeyKiler = "9qtqb883NM9N1Ar89UeDNZF08c60xadkBrEGEwmTGFvYbREPj8xNhmhKCcrEtfYD";

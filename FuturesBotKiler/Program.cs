@@ -22,6 +22,7 @@ using System.Globalization;
 using CryptoExchange.Net.Objects;
 using Binance.Net.Objects.Models.Futures;
 using System.Collections;
+using FuturesBotKiler.Models;
 
 namespace FuturesBotKiler
 {
@@ -31,28 +32,54 @@ namespace FuturesBotKiler
         {
             _ = CreateHostBuilder(args).Build().StartAsync();
 
-            var client = new BinanceClient(new BinanceClientOptions()
+            BinanceClient.SetDefaultOptions(new BinanceClientOptions
             {
                 ApiCredentials = new ApiCredentials(Parametros.BinanceKey, Parametros.BinanceSecret)
             });
-            var socketClient = new BinanceSocketClient(new BinanceSocketClientOptions()
+            BinanceSocketClient.SetDefaultOptions(new BinanceSocketClientOptions
             {
                 ApiCredentials = new ApiCredentials(Parametros.BinanceKey, Parametros.BinanceSecret)
             });
 
+            var client2 = new BinanceClient();
+            //var socketClient = new BinanceSocketClient();
+
             //PARAMETROS
-            string symbol = "BTCUSDT";
             bool posicionAbierta = false;
+
+            string symbol = "BTCUSDT";
             decimal porcentajeTakeProfit = 1.10m;
             decimal porcentajeStopLoss = 0.30m;
-            OrderSide orderSide = OrderSide.Buy; //Buy O Sell
+            OrderSide orderSide = OrderSide.Buy; //Buy o Sell
+
+            //string[] spliteo = "1-0-1.10-0.30-30-BTCUSDT-Buy".Split("-");
+            //Orden orden2 = new Orden()
+            //{
+            //    Id = Convert.ToInt32(spliteo[0]),
+            //    Etapa = Convert.ToInt32(spliteo[1]),
+            //    PorcentajeTakeProfit = Convert.ToDecimal(spliteo[2]),
+            //    PorcentajeStopLoss = Convert.ToDecimal(spliteo[3]),
+            //    Size = Convert.ToDecimal(spliteo[4]),
+            //    Symbol = spliteo[5],
+            //    Side = OrderSide.Buy
+            //};
+
+            Orden orden1 = new Orden("BTCUSDT", 1.10m, 0.20m, 30, OrderSide.Buy);
+            Orden orden2 = new Orden("ETHUSDT", 1.10m, 0.20m, 30, OrderSide.Buy);
+            Parametros.Ordenes.Add(1, orden1);
+            Parametros.Ordenes.Add(2, orden2);
+
             //PRUEBAS
             //decimal porcentajeTakeProfit = 0.15m;
             //decimal porcentajeStopLoss = 0.15m;
 
             //PRUEBA PARA REVISAR IDS
-            //var ordersData = await client.UsdFuturesApi.Trading.GetOrdersAsync(symbol, limit: 100);
-            //var userTrades = await client.UsdFuturesApi.Trading.GetUserTradesAsync(symbol, limit: 10);
+            //var ordersdata = await client2.UsdFuturesApi.Trading.GetOrdersAsync("LTCUSDT", limit: 100);
+            //var usertrades = await client2.UsdFuturesApi.Trading.GetUserTradesAsync("XRPUSDT", limit: 100);
+            //var filtrado = usertrades.Data.Where(l => l.OrderId == 23772467041).ToList();
+            //TelegramMessage.Message($"PNL STOP LOSS {Environment.NewLine}" +
+            //                        $"FEE: {decimal.Round(filtrado.Sum(o => o.Fee), 3)} {Environment.NewLine}" +
+            //                        $"PNL: {decimal.Round(filtrado.Sum(o => o.RealizedPnl), 3)}");
             //var filtrado = userTrades.Data.Where(l => l.OrderId == 76349962931).ToList();
             //var income = await client.UsdFuturesApi.Account.GetIncomeHistoryAsync(symbol, incomeType: "REALIZED_PNL");
             //var income2 = await client.UsdFuturesApi.Account.GetIncomeHistoryAsync(symbol);
@@ -68,75 +95,34 @@ namespace FuturesBotKiler
             //if (orderData.Success)
             //76335970039
 
-            //CALCULO ETAPA, REVISO SI TENGO POSICION EN ESE PAR, SI NO TENGO ES ETAPA 0, SI TENGO REVISO SI ES UNA ORDEN PUESTA POR EL BOT
-            var posiciones = await client.UsdFuturesApi.Account.GetPositionInformationAsync(symbol);
-            if (posiciones.Data.First().Quantity == 0)
+            //CREO LA ORDEN INICIAL
+            if (posicionAbierta == false)
             {
-                Parametros.Etapa = 0;
+                foreach (Orden orden in Parametros.Ordenes.Values)
+                {
+                    //CALCULO ETAPA, REVISO SI TENGO POSICION EN ESE PAR, SI NO TENGO ES ETAPA 0, SI TENGO REVISO SI ES UNA ORDEN PUESTA POR EL BOT
+                    await CalcularEtapaOrden(orden);
+
+                    //CALCULO ID (CAMBIA POR CADA SYMBOL)
+                    await CalcularUltimoIdOrden(orden);
+
+                    await CrearOrden(orden);
+                }
             }
             else
             {
-                //PARA EVITAR ABRIR LA POSICION INICIAL
-                posicionAbierta = true;
-
-                //REVISO ORDENES ABIERTAS PARA CALCULAR LA ETAPA
-                var ordenesAbiertas = await client.UsdFuturesApi.Trading.GetOpenOrdersAsync(symbol);
-                if (ordenesAbiertas.Data.Count() > 0)
-                {
-                    string[] spliteo = ordenesAbiertas.Data.Last().ClientOrderId.Split("-");
-                    if (spliteo.Count() > 1)
-                    {
-                        Parametros.Etapa = Convert.ToInt32(spliteo[1]);
-                        Console.WriteLine($"Etapa: {Parametros.Etapa}");
-                    }
-                }
-            }
-
-            //CALCULO ID, BUSCO LOS IDS DE TODAS LAS ORDENES
-            var ordenes = await client.UsdFuturesApi.Trading.GetOrdersAsync(symbol, limit: 100);
-            if (ordenes.Data.Count() > 0)
-            {
-                //PARA REINICIAR EL ID DE LAS ORDENES
-                if (Parametros.ClientId == 0) { }
-                else
-                {
-                    //AGARRO SOLAMENTE LOS CLIENTORDERID Y BUSCO EL ULTIMO
-                    List<string> listaClientOrderId = ordenes.Data.Select(l => l.ClientOrderId).ToList();
-                    listaClientOrderId.Reverse();
-                    foreach (var orden in listaClientOrderId)
-                    {
-                        string[] spliteo = orden.Split("-");
-                        if (spliteo.Count() > 1)
-                        {
-                            //SETEO ULTIMO ID
-                            Parametros.ClientId = Convert.ToInt32(spliteo[0]) + 1;
-                            break;
-                        }
-                    }
-                }
+                //Console.WriteLine($"YA EXISTE POSICIÓN. ETAPA: {orden.Etapa}");
             }
 
             //SUSCRIPCION
+            BinanceClient client = new BinanceClient();
             var listenKey = await client.UsdFuturesApi.Account.StartUserStreamAsync();
-            if (!listenKey.Success)
+
+            if (listenKey.Success)
             {
-                // Handler failure
-                return;
-            }
-            var sub = await socketClient.UsdFuturesStreams.SubscribeToUserDataUpdatesAsync(listenKey.Data,
-                data =>
-                {
-                    // Handle leverage update
-                },
-                data =>
-                {
-                    // Handle margin update
-                },
-                data =>
-                {
-                    // Handle account balance update, caused by trading
-                },
-                async data =>
+                BinanceSocketClient socketClient = new BinanceSocketClient();                
+                var sub = await socketClient.UsdFuturesStreams.SubscribeToUserDataUpdatesAsync(listenKey.Data, null, null, null,
+                onOrderUpdate: async data =>
                 {
                     // Handle order update
 
@@ -147,150 +133,243 @@ namespace FuturesBotKiler
                         string[] spliteo = data.Data.UpdateData.ClientOrderId.Split("-");
                         if (spliteo.Count() > 1)
                         {
-                            await client.UsdFuturesApi.Trading.CancelAllOrdersAsync(symbol);
-                            Parametros.Etapa++;
+                            //CANCELO TODAS LAS ORDENES PENDIENTES
+                            await client.UsdFuturesApi.Trading.CancelAllOrdersAsync(data.Data.UpdateData.Symbol);
                             TelegramMessage.Message($"SE ACTIVÓ STOP LOSS. {Environment.NewLine}" +
                                                     $"ID: {data.Data.UpdateData.ClientOrderId} {Environment.NewLine}" +
                                                     $"STOP PRICE: {data.Data.UpdateData.StopPrice} {Environment.NewLine}" +
                                                     $"DATE:" + DateTime.Now);
-                            await CrearOrden(client, symbol, data.Data.UpdateData.Side, porcentajeTakeProfit, porcentajeStopLoss, Parametros.Quantity);
 
-                            //CALCULAR PNL BUSCANDO EL TRADE
-                            var userTrades = await client.UsdFuturesApi.Trading.GetUserTradesAsync(symbol, limit: 10);
+                            //CAPTURO CLIENTORDERID Y CREO UN OBJETO ORDEN
+                            Orden orden = new Orden()
+                            {
+                                Id = Convert.ToInt32(spliteo[0]),
+                                Etapa = Convert.ToInt32(spliteo[1]),
+                                PorcentajeTakeProfit = Convert.ToDecimal(spliteo[2]),
+                                PorcentajeStopLoss = Convert.ToDecimal(spliteo[3]),
+                                Size = Convert.ToDecimal(spliteo[4]),
+                                Symbol = spliteo[5],
+                                Side = data.Data.UpdateData.Side
+                            };
+
+                            //AUMENTO LA ETAPA PARA LA SIGUIENTE ORDEN
+                            orden.Etapa++;
+
+                            //BUSCO EL ID CORRECTO
+                            await CalcularUltimoIdOrden(orden);
+
+                            //CREO ORDEN CON LA SIGUIENTE ETAPA Y DIRECCION CONTRARIA
+                            await CrearOrden(orden);
+
+                            //CALCULAR PNL BUSCANDO LOS TRADES
+                            var userTrades = await client.UsdFuturesApi.Trading.GetUserTradesAsync(data.Data.UpdateData.Symbol, limit: 10);
                             var filtrado = userTrades.Data.Where(l => l.OrderId == data.Data.UpdateData.OrderId).ToList();
                             TelegramMessage.Message($"PNL STOP LOSS {Environment.NewLine}" +
-                                                    $"FEE: {decimal.Round(filtrado[0].Fee, 3)} {Environment.NewLine}" +
-                                                    $"PNL: {decimal.Round(filtrado[0].RealizedPnl, 3)}");
+                                                    $"FEE: {decimal.Round(filtrado.Sum(o => o.Fee), 3)} {Environment.NewLine}" +
+                                                    $"PNL: {decimal.Round(filtrado.Sum(o => o.RealizedPnl), 3)}");
                         }
                     }
-                    else if (data.Data.UpdateData.Type == FuturesOrderType.TakeProfitMarket && data.Data.UpdateData.Status == OrderStatus.Expired) //CAMBIAR POR EXPIRED / CANCELED
+                    else if (data.Data.UpdateData.Type == FuturesOrderType.TakeProfitMarket && data.Data.UpdateData.Status == OrderStatus.Expired) //CAMBIAR POREXPIREDCANCELED
                     {
                         //VERIFICO SI ES UNA ORDEN DEL BOT
                         string[] spliteo = data.Data.UpdateData.ClientOrderId.Split("-");
                         if (spliteo.Count() > 1)
                         {
-                            await client.UsdFuturesApi.Trading.CancelAllOrdersAsync(symbol);
+                            //CANCELO TODAS LAS ORDENES PENDIENTES
+                            await client.UsdFuturesApi.Trading.CancelAllOrdersAsync(data.Data.UpdateData.Symbol);
                             TelegramMessage.Message($"SE ACTIVÓ TAKE PROFIT. {Environment.NewLine}" +
                                                     $"ID: {data.Data.UpdateData.ClientOrderId} {Environment.NewLine}" +
                                                     $"STOP PRICE: {data.Data.UpdateData.StopPrice} {Environment.NewLine}" +
                                                     $"DATE:" + DateTime.Now);
 
-                            //CALCULAR PNL BUSCANDO EL TRADE
-                            var userTrades = await client.UsdFuturesApi.Trading.GetUserTradesAsync(symbol, limit: 10);
+                            //CALCULAR PNL BUSCANDO LOS TRADES
+                            var userTrades = await client.UsdFuturesApi.Trading.GetUserTradesAsync(data.Data.UpdateData.Symbol, limit: 10);
                             var filtrado = userTrades.Data.Where(l => l.OrderId == data.Data.UpdateData.OrderId).ToList();
                             TelegramMessage.Message($"PNL TAKE PROFIT {Environment.NewLine}" +
-                                                    $"FEE: {decimal.Round(filtrado[0].Fee, 3)} {Environment.NewLine}" +
-                                                    $"PNL: {decimal.Round(filtrado[0].RealizedPnl, 3)}");
+                                                    $"FEE: {decimal.Round(filtrado.Sum(o => o.Fee), 3)} {Environment.NewLine}" +
+                                                    $"PNL: {decimal.Round(filtrado.Sum(o => o.RealizedPnl), 3)}");
                         }
                     }
 
                     //PRUEBA
-                    //if (data.Data.UpdateData.Type == FuturesOrderType.StopMarket && data.Data.UpdateData.Status == OrderStatus.Canceled) //CAMBIAR POR EXPIRED / CANCELED
-                    //{
-                    //    var ordersData = await client.UsdFuturesApi.Trading.GetOrdersAsync("BTCUSDT");
-                    //}
+                    if (data.Data.UpdateData.Type == FuturesOrderType.StopMarket && data.Data.UpdateData.Status == OrderStatus.Canceled) //CAMBIAR POR EXPIRED / CANCELED
+                    {
+                        var ordersData = await client.UsdFuturesApi.Trading.GetOrdersAsync("BTCUSDT");
+                    }
                 },
                 data =>
                 {
                     // Handle listen key expired
-
-                    //NO DEBERIA LLEGAR AQUI
-                    client.UsdFuturesApi.Account.KeepAliveUserStreamAsync(listenKey.Data);
+                    TelegramMessage.Message($"EXPIRÓ LISTENKEY {DateTime.Now}");
                     Console.WriteLine($"EXPIRÓ LISTENKEY {DateTime.Now}");
                 });
+                
 
-            //KEEP ALIVE LISTEN KEY CADA 55 MINUTOS
-            System.Timers.Timer timer = new(interval: 3300000);
-            timer.Elapsed += async (sender, e) => {
-                await client.UsdFuturesApi.Account.KeepAliveUserStreamAsync(listenKey.Data);
-                Console.WriteLine($"SE REINICIÓ EL LISTENKEY {DateTime.Now}");
-                TelegramMessage.Message($"ESPERANDO (SE REINICIÓ EL LISTENKEY {DateTime.Now})");
-            };
-            timer.Start();
-
-            //CREO LA ORDEN INICIAL
-            if (Parametros.Etapa == 0 && posicionAbierta == false)
-            {
-                await CrearOrden(client, symbol, orderSide, porcentajeTakeProfit, porcentajeStopLoss, Parametros.Quantity);
+                //KEEP ALIVE LISTEN KEY CADA 55 MINUTOS
+                System.Timers.Timer timer = new(interval: 3300000);
+                timer.Elapsed += async (sender, e) =>
+                {
+                    await client.UsdFuturesApi.Account.KeepAliveUserStreamAsync(listenKey.Data);
+                    Console.WriteLine($"SE REINICIÓ EL LISTENKEY {DateTime.Now}");
+                    TelegramMessage.Message($"ESPERANDO (SE REINICIÓ EL LISTENKEY {DateTime.Now})");
+                };
+                timer.Start();
             }
             else
             {
-                Console.WriteLine($"YA EXISTE POSICIÓN. ETAPA: {Parametros.Etapa}");
-            }
+                // Handler failure
+
+                Console.WriteLine($"NO SE PUDO SUSCRIBIR {DateTime.Now}");
+                TelegramMessage.Message($"NO SE PUDO SUSCRIBIR {DateTime.Now})");
+                return;
+            }         
 
             Console.ReadLine();
         }
 
-        public static async Task CrearOrden(BinanceClient client, string symbol, OrderSide orderSide, decimal porcentajeTakeProfit, decimal porcentajeStopLoss, decimal quantity)
+        private static async Task CalcularEtapaOrden(Orden orden)
+        {
+            using (BinanceClient client = new BinanceClient())
+            {
+                //SI NO EXISTE POSICION ABIERTA SE PONE LA ETAPA EN 0
+                var posiciones = await client.UsdFuturesApi.Account.GetPositionInformationAsync(orden.Symbol);
+                if (posiciones.Data.First().Quantity == 0)
+                {
+                    //Parametros.Etapa = 0;
+                    orden.Etapa = 0;
+                }
+                else
+                {
+                    //PARA EVITAR ABRIR LA POSICION INICIAL DE PRUEBA DEL BOT
+                    //posicionAbierta = true;
+
+                    //REVISO ORDENES ABIERTAS PARA CALCULAR LA ETAPA
+                    var ordenesAbiertas = await client.UsdFuturesApi.Trading.GetOpenOrdersAsync(orden.Symbol);
+                    if (ordenesAbiertas.Data.Count() > 0)
+                    {
+                        string[] spliteo = ordenesAbiertas.Data.Last().ClientOrderId.Split("-");
+                        if (spliteo.Count() > 1)
+                        {
+                            orden.Etapa = Convert.ToInt32(spliteo[1]);
+                            //Parametros.Etapa = Convert.ToInt32(spliteo[1]);
+                            //Console.WriteLine($"Etapa: {Parametros.Etapa}");
+                        }
+                    }
+                }
+            }
+        }
+
+        private static async Task CalcularUltimoIdOrden(Orden orden)
+        {
+            using (BinanceClient client = new BinanceClient())
+            {
+                //CALCULO ID, BUSCO LOS IDS DE TODAS LAS ORDENES
+                var ordenes = await client.UsdFuturesApi.Trading.GetOrdersAsync(orden.Symbol, limit: 50);
+                if (ordenes.Data.Count() > 0)
+                {
+                    //PARA REINICIAR EL ID DE LAS ORDENES
+                    //if (Parametros.ClientId == 0) { }
+                    if (orden.Id == 0) { }
+                    else
+                    {
+                        //AGARRO SOLAMENTE LOS CLIENTORDERID Y BUSCO EL ULTIMO
+                        List<string> listaClientOrderId = ordenes.Data.Select(l => l.ClientOrderId).Reverse().ToList();
+
+                        foreach (var ordenesAbiertas in listaClientOrderId)
+                        {
+                            string[] spliteo = ordenesAbiertas.Split("-");
+                            if (spliteo.Count() > 1)
+                            {
+                                //SETEO ULTIMO ID
+                                //Parametros.ClientId = Convert.ToInt32(spliteo[0]) + 1;
+                                orden.Id = Convert.ToInt32(spliteo[0]) + 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static async Task CrearOrden(Orden orden)
         {
             //MULTIPLICO EL QUANTITY POR LA ETAPA
             decimal factor = 1.40m;
-
-            //PRUEBA
-            //Parametros.Etapa = 4;
-            //if (Parametros.Etapa == 7)
-            //{}
-
-            for (int i = 0; i < Parametros.Etapa; i++)
+            for (int i = 0; i < orden.Etapa; i++)
             {
-                Parametros.Quantity = quantity * factor;
+                orden.Size = orden.Size * factor;
             }
-            //CALCULAR QUANTITY EN MONEDA
-            quantity = decimal.Round(Parametros.Quantity / client.UsdFuturesApi.ExchangeData.GetPriceAsync(symbol).Result.Data.Price, 3); //CAPTURO PRECIO Y DIVIDO
+            orden.Size = decimal.Round(orden.Size, 2);
 
-            //CREO ORDEN
-            var openPositionResult = await client.UsdFuturesApi.Trading.PlaceOrderAsync(symbol, orderSide, FuturesOrderType.Market, quantity, newClientOrderId: $"{Parametros.ClientId}-{Parametros.Etapa}-{symbol}-{orderSide}");
-            if (openPositionResult.Success)
+            using (BinanceClient client = new BinanceClient())
             {
-                //OBTENGO PRECIO MARKET DE LA ORDEN RECIEN CREADA 
-                var marketPrice = await client.UsdFuturesApi.Trading.GetOrderAsync(symbol, openPositionResult.Data.Id);
-                decimal orderPrice = decimal.Round(marketPrice.Data.AvgPrice, 2);
+                //CALCULAR QUANTITY EN MONEDA
+                orden.Quantity = decimal.Round(orden.Size / client.UsdFuturesApi.ExchangeData.GetPriceAsync(orden.Symbol).Result.Data.Price, 3); //CAPTURO PRECIO Y DIVIDO
 
-                //MANDO MENSAJE POR TELEGRAM
-                TelegramMessage.Message($"SE CREARON ÓRDENES EXITOSAMENTE. {Environment.NewLine}" +
-                                        $"ID: {Parametros.ClientId}-{Parametros.Etapa}-{symbol}-{orderSide} {Environment.NewLine}" +
-                                        $"PRICE: {orderPrice} {Environment.NewLine}" +
-                                        $"DATE: {DateTime.Now}");
-
-                //SI LA ORDEN ES EXITOSA AUMENTA EL ID
-                Parametros.ClientId++;
-
-                if (orderSide == OrderSide.Buy)
+                //CREO ORDEN
+                string clientOrderId = $"{orden.Id}-{orden.Etapa}-{orden.PorcentajeTakeProfit}-{orden.PorcentajeStopLoss}-{orden.Size}-{orden.Symbol}-{orden.Side}";
+                var openPositionResult = await client.UsdFuturesApi.Trading.PlaceOrderAsync(orden.Symbol, orden.Side, FuturesOrderType.Market, orden.Quantity, newClientOrderId: clientOrderId);
+                if (openPositionResult.Success)
                 {
-                    //CALCULO PRECIOS DE STOP LOSS Y TAKE PROFIT
-                    decimal stopLossPrice = decimal.Round(orderPrice - (orderPrice * porcentajeStopLoss / 100), 2);
-                    decimal takeProfitPrice = decimal.Round(orderPrice + (orderPrice * porcentajeTakeProfit / 100), 2);
+                    //OBTENGO PRECIO MARKET DE LA ORDEN RECIEN CREADA 
+                    var marketPrice = await client.UsdFuturesApi.Trading.GetOrderAsync(orden.Symbol, openPositionResult.Data.Id);
+                    decimal orderPrice = decimal.Round(marketPrice.Data.AvgPrice, 2);
 
-                    //CREO ORDEN DE STOP LOSS
-                    var stopLossResult = await client.UsdFuturesApi.Trading.PlaceOrderAsync(symbol, OrderSide.Sell, FuturesOrderType.StopMarket, quantity: null, closePosition: true, stopPrice: stopLossPrice, newClientOrderId: $"{Parametros.ClientId}-{Parametros.Etapa}-{symbol}-sl");
-
-                    //SI LA ORDEN ES EXITOSA AUMENTA EL ID
-                    if (stopLossResult.Success) Parametros.ClientId++;
-
-                    //CREO ORDEN DE TAKE PROFIT
-                    var takeProfitResult = await client.UsdFuturesApi.Trading.PlaceOrderAsync(symbol, OrderSide.Sell, FuturesOrderType.TakeProfitMarket, quantity: null, closePosition: true, stopPrice: takeProfitPrice, newClientOrderId: $"{Parametros.ClientId}-{Parametros.Etapa}-{symbol}-tp");
+                    //MANDO MENSAJE POR TELEGRAM
+                    TelegramMessage.Message($"SE CREARON ÓRDENES EXITOSAMENTE. {Environment.NewLine}" +
+                                            $"ID: {clientOrderId} {Environment.NewLine}" +
+                                            $"PRICE: {orderPrice} {Environment.NewLine}" +
+                                            $"DATE: {DateTime.Now}");
 
                     //SI LA ORDEN ES EXITOSA AUMENTA EL ID
-                    if (takeProfitResult.Success) Parametros.ClientId++;
-                }
-                else if (orderSide == OrderSide.Sell)
-                {
-                    //CALCULO PRECIOS DE STOP LOSS Y TAKE PROFIT
-                    decimal stopLossPrice = decimal.Round(orderPrice + (orderPrice * porcentajeStopLoss / 100), 2);
-                    decimal takeProfitPrice = decimal.Round(orderPrice - (orderPrice * porcentajeTakeProfit / 100), 2);
+                    //Parametros.ClientId++;
+                    orden.Id++;
 
-                    //CREO ORDEN DE STOP LOSS
-                    var stopLossResult = await client.UsdFuturesApi.Trading.PlaceOrderAsync(symbol, OrderSide.Buy, FuturesOrderType.StopMarket, quantity: null, closePosition: true, stopPrice: stopLossPrice, newClientOrderId: $"{Parametros.ClientId}-{Parametros.Etapa}-{symbol}-sl");
+                    if (orden.Side == OrderSide.Buy)
+                    {
+                        //CALCULO PRECIOS DE STOP LOSS Y TAKE PROFIT
+                        decimal stopLossPrice = decimal.Round(orderPrice - (orderPrice * orden.PorcentajeStopLoss / 100), 2);
+                        decimal takeProfitPrice = decimal.Round(orderPrice + (orderPrice * orden.PorcentajeTakeProfit / 100), 2);
 
-                    //SI LA ORDEN ES EXITOSA AUMENTA EL ID
-                    if (stopLossResult.Success) Parametros.ClientId++;
+                        //CREO ORDEN DE STOP LOSS
+                        clientOrderId = $"{orden.Id}-{orden.Etapa}-{orden.PorcentajeTakeProfit}-{orden.PorcentajeStopLoss}-{orden.Size}-{orden.Symbol}-SL";
+                        var stopLossResult = await client.UsdFuturesApi.Trading.PlaceOrderAsync(orden.Symbol, OrderSide.Sell, FuturesOrderType.StopMarket, quantity: null, closePosition: true, stopPrice: stopLossPrice, newClientOrderId: clientOrderId);
 
-                    //CREO ORDEN DE TAKE PROFIT
-                    var takeProfitResult = await client.UsdFuturesApi.Trading.PlaceOrderAsync(symbol, OrderSide.Buy, FuturesOrderType.TakeProfitMarket, quantity: null, closePosition: true, stopPrice: takeProfitPrice, newClientOrderId: $"{Parametros.ClientId}-{Parametros.Etapa}-{symbol}-tp");
+                        //SI LA ORDEN ES EXITOSA AUMENTA EL ID
+                        //if (stopLossResult.Success) Parametros.ClientId++;
+                        if (stopLossResult.Success) orden.Id++;
 
-                    //SI LA ORDEN ES EXITOSA AUMENTA EL ID
-                    if (takeProfitResult.Success) Parametros.ClientId++;
-                }
+                        //CREO ORDEN DE TAKE PROFIT
+                        clientOrderId = $"{orden.Id}-{orden.Etapa}-{orden.PorcentajeTakeProfit}-{orden.PorcentajeStopLoss}-{orden.Size}-{orden.Symbol}-TP";
+                        var takeProfitResult = await client.UsdFuturesApi.Trading.PlaceOrderAsync(orden.Symbol, OrderSide.Sell, FuturesOrderType.TakeProfitMarket, quantity: null, closePosition: true, stopPrice: takeProfitPrice, newClientOrderId: clientOrderId);
+
+                        //SI LA ORDEN ES EXITOSA AUMENTA EL ID
+                        //if (takeProfitResult.Success) Parametros.ClientId++;
+                        //if (takeProfitResult.Success) orden.Id++;
+                    }
+                    else if (orden.Side == OrderSide.Sell)
+                    {
+                        //CALCULO PRECIOS DE STOP LOSS Y TAKE PROFIT
+                        decimal stopLossPrice = decimal.Round(orderPrice + (orderPrice * orden.PorcentajeStopLoss / 100), 2);
+                        decimal takeProfitPrice = decimal.Round(orderPrice - (orderPrice * orden.PorcentajeTakeProfit / 100), 2);
+
+                        //CREO ORDEN DE STOP LOSS
+                        clientOrderId = $"{orden.Id}-{orden.Etapa}-{orden.PorcentajeTakeProfit}-{orden.PorcentajeStopLoss}-{orden.Size}-{orden.Symbol}-SL";
+                        var stopLossResult = await client.UsdFuturesApi.Trading.PlaceOrderAsync(orden.Symbol, OrderSide.Buy, FuturesOrderType.StopMarket, quantity: null, closePosition: true, stopPrice: stopLossPrice, newClientOrderId: clientOrderId);
+
+                        //SI LA ORDEN ES EXITOSA AUMENTA EL ID
+                        //if (stopLossResult.Success) Parametros.ClientId++;
+                        if (stopLossResult.Success) orden.Id++;
+
+                        //CREO ORDEN DE TAKE PROFIT
+                        clientOrderId = $"{orden.Id}-{orden.Etapa}-{orden.PorcentajeTakeProfit}-{orden.PorcentajeStopLoss}-{orden.Size}-{orden.Symbol}-TP";
+                        var takeProfitResult = await client.UsdFuturesApi.Trading.PlaceOrderAsync(orden.Symbol, OrderSide.Buy, FuturesOrderType.TakeProfitMarket, quantity: null, closePosition: true, stopPrice: takeProfitPrice, newClientOrderId: clientOrderId);
+
+                        //SI LA ORDEN ES EXITOSA AUMENTA EL ID
+                        //if (takeProfitResult.Success) Parametros.ClientId++;
+                        //if (takeProfitResult.Success) orden.Id++;
+                    }
+                } 
             }
         }
 
