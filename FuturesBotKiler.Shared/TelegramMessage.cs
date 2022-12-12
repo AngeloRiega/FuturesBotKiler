@@ -4,11 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 
-namespace FuturesBotKiler
+namespace FuturesBotKiler.Shared
 {
     public static class TelegramMessage
     {
-        private static ITelegramBotClient? botClient;
+        private static ITelegramBotClient botClient;
 
         public static void Message(string message)
         {

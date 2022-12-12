@@ -1,0 +1,46 @@
+﻿::deep table td,
+::deep table th {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    /*    vertical-align: middle;*/
+}
+
+::deep table th {
+    text-align: center;
+    text-transform: uppercase;
+    color: #198754;
+}
+
+::deep table > tbody > tr {
+    vertical-align: middle;
+   /*padding: 0.5rem 1rem;*/
+}
+
+::deep table > tbody > tr > td {
+    padding: 0.5rem 1rem;
+}
+
+::deep .form-check-input form-check-input-danger {
+    background-color: #198754 !important; /*SUCCESS*/
+}
+
+.card {
+    border-radius: 0.75rem;
+    border: 2px solid #198754;
+    background-color: darkgrey;
+}
+
+.table-scroll {
+    border-radius: .5rem;
+}
+
+thead {
+    top: 0;
+    position: sticky;
+}
+/*
+h2 {
+    color: brown;
+    font-family: Tahoma, Geneva, Verdana, sans-serif;
+}*/

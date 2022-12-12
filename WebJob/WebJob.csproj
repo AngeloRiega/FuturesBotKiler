@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk;Microsoft.NET.Sdk.Publish">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <IsWebJobProject>true</IsWebJobProject>
+    <WebJobName>$(AssemblyName)</WebJobName>
+    <WebJobType>Triggered</WebJobType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.2.0" />
+    <PackageReference Include="Azure.Storage.Files.Shares" Version="12.0.1" />
+    <PackageReference Include="Azure.Storage.Queues" Version="12.1.1" />
+    <PackageReference Include="Binance.Net" Version="8.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Spatial" Version="5.8.4" />
+    <PackageReference Include="Microsoft.Data.Edm" Version="5.8.4" />
+    <PackageReference Include="Microsoft.Data.OData" Version="5.8.4" />
+    <PackageReference Include="Microsoft.Data.Services.Client" Version="5.8.4" />
+    <PackageReference Include="Microsoft.WindowsAzure.ConfigurationManager" Version="3.2.1" />
+    <PackageReference Include="Telegram.Bot" Version="18.0.0" />
+    <PackageReference Include="WindowsAzure.Storage" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Core" Version="1.1.2" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="1.1.2" />
+    <PackageReference Include="Microsoft.Azure.KeyVault.Core" Version="1.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FuturesBotKiler.Shared\FuturesBotKiler.Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Settings.job">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

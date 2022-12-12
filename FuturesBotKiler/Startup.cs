@@ -37,6 +37,8 @@ namespace FuturesBotKiler
 
             app.UseRouting();
 
+            app.UseWebSockets();
+
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

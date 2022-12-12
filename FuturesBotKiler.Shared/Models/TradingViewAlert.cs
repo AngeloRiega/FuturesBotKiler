@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace FuturesBotKiler.Models
+namespace FuturesBotKiler.Shared.Models
 {
     public class TradingViewAlert
     {

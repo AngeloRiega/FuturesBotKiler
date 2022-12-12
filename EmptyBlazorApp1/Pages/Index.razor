@@ -1,0 +1,256 @@
+﻿@page "/"
+@inject IBinanceService BinanceService
+@inject IJSRuntime JSRuntime
+@inject PositionService PositionService
+
+<PageTitle>Positions</PageTitle>
+
+<h1 style="color: white">Positions</h1>
+<br />
+
+<Alert @ref="myAlert" @bind-Color="@alertColor" @bind-Visible="@visibilityAlert" Dismisable>
+    <AlertMessage>
+        @AlertContent
+    </AlertMessage>
+    <CloseButton />
+</Alert>
+
+<Modal @ref="modalWatchlist">
+    <ModalContent Centered>
+        <Form>
+            <ModalHeader>
+                <ModalTitle>Add Watchlist</ModalTitle>
+                <CloseButton />
+            </ModalHeader>
+            <ModalBody>
+                <Field>
+                    <FieldLabel>Symbol</FieldLabel>
+                    <TextEdit @bind-Text="symbol" Placeholder="eg. BTCUSDT" Autofocus Casing="CharacterCasing.Upper"/>
+                </Field>
+            </ModalBody>
+            <ModalFooter>
+                <Button Color="Color.Secondary" Clicked="() => modalWatchlist.Hide()" Type="ButtonType.Button">Close</Button>
+                <Button Color="Color.Primary" Clicked="(() => ModalAddWatchlist(symbol))" Type="ButtonType.Submit">Save Changes</Button>
+            </ModalFooter>
+        </Form>
+    </ModalContent>
+</Modal>
+
+<Modal @ref="modalNewPosition">
+    <ModalContent Centered>
+        <Form>
+            <ModalHeader>
+                <ModalTitle>New Position</ModalTitle>
+                <CloseButton />
+            </ModalHeader>
+            <ModalBody>
+                <Field>
+                    <Switch TValue="bool" @bind-Checked="side" Color="Color.Danger">Side</Switch>
+                </Field>
+                <Field>
+                    <FieldLabel>Symbol</FieldLabel>
+                    <TextEdit @bind-Text="symbol" ReadOnly Casing="CharacterCasing.Upper"/>
+                </Field>
+                <Field>
+                    <FieldLabel>Size</FieldLabel>
+                    <TextEdit @bind-Text="size" Autofocus/>
+                </Field>
+                <Field>
+                    <FieldLabel>TP/SL</FieldLabel>
+                    <TextEdit @bind-Text="PorcentajeTakeProfit"/>
+                    <TextEdit @bind-Text="PorcentajeStopLoss"/>
+                </Field>
+            </ModalBody>
+            <ModalFooter>
+                @{
+                    Color newPositionButtonColor = side == true ? Color.Danger : Color.Success;
+                    string newPositionButtonText = side == true ? "SELL/SHORT" : "BUY/LONG";
+                }
+                <Button Clicked="() => modalNewPosition.Hide()" Color="Color.Secondary" Type="ButtonType.Button">Close</Button>
+                <Button Clicked="() => ModalNewPosition(symbol, side, size, PorcentajeStopLoss, PorcentajeTakeProfit)" Color="newPositionButtonColor">@newPositionButtonText</Button>
+            </ModalFooter>
+        </Form>
+    </ModalContent>
+</Modal>
+
+@*<input placeholder="Symbol eg.ETHUSDT" @bind="symbol" />
+<br />
+<Button Clicked="(() => AddWatchlist(symbol))" Color="Color.Primary">Add</Button>
+<br />*@
+
+@*@if (PositionService.Watchlist.Count == 0)
+{
+    <b>Watchlist vacío</b>
+}
+else
+{
+    @foreach (string symbol in PositionService.Watchlist)
+    {
+        <b>@symbol</b>
+        <br />
+    }
+        <br />
+}*@
+
+    <div class="bg-image h-100">
+        <div class="mask d-flex align-items-center h-100">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-12">
+                        <div class="card shadow-2-strong">
+                            <div class="card-body p-0">
+                                <div class="table-responsive table-scroll" data-mdb-perfect-scrollbar="true">
+                                    <Table class="table table-dark mb-0">
+                                        <TableHeader Background="Background.Dark">
+                                            <TableRow>
+                                            <TableHeaderCell>Symbol <Icon class="far fa-plus-square" style="cursor: pointer" Clicked="() => {symbol = null; modalWatchlist.Show();}"></Icon></TableHeaderCell>
+                                                <TableHeaderCell>Quantity</TableHeaderCell>
+                                                <TableHeaderCell>Entry Price</TableHeaderCell>
+                                                <TableHeaderCell>Mark Price</TableHeaderCell>
+                                                <TableHeaderCell>PNL</TableHeaderCell>
+                                                <TableHeaderCell></TableHeaderCell>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                        @foreach (var position in Positions)
+                                        {
+                                            string? unrealizedPnlColor = position.unrealizedPnl > 0 && position.unrealizedPnl != 0.0 ? "color: green" : null;
+                                            if (unrealizedPnlColor is null) unrealizedPnlColor = position.unrealizedPnl < 0.0 ? "color: red" : "color: white";
+
+                                            <TableRow>
+                                                <TableRowCell><Icon class="fas fa-minus" style="cursor: pointer" Clicked="() => DeleteWatchlist(position.symbol)"></Icon> @position.symbol</TableRowCell>
+                                                <TableRowCell>@position.quantity</TableRowCell>
+                                                <TableRowCell>@position.entryPrice</TableRowCell>
+                                                <TableRowCell>@double.Round(@position.markPrice.GetValueOrDefault(), 2)</TableRowCell>
+                                                <TableRowCell style="@unrealizedPnlColor">@double.Round(@position.unrealizedPnl.GetValueOrDefault(), 3)</TableRowCell>
+                                                <TableRowCell style="text-align: center;">
+                                                    <Button Clicked="() => ClosePosition(position.symbol)" Color="Color.Warning" Type="ButtonType.Button">Close</Button>
+                                                    <Button Clicked="() => {symbol = position.symbol; modalNewPosition.Show();}" Color="Color.Primary" Type="ButtonType.Button">Market</Button>
+                                                </TableRowCell>
+                                            </TableRow>
+                                        }
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@code {
+    //Alerta de cerrar posicion.
+    Alert? myAlert = new Alert();
+    Color? alertColor;
+    string? AlertContent { get; set; }
+    bool visibilityAlert = false;
+
+    private string? symbol;
+    List<FuturesBotKiler.Shared.Models.Position> Positions = new List<FuturesBotKiler.Shared.Models.Position>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _ = JSRuntime.InvokeVoidAsync("console.log", "OnInitializedAsync");
+        //PRUEBAS
+        //PositionService.AddWatchlist("BTCUSDT");
+        //PositionService.AddWatchlist("ETHUSDT");
+
+        if (PositionService.Watchlist.Count > 0)
+        {
+            Positions.Clear();
+            Positions = await BinanceService.GetPositions(PositionService.Watchlist);
+        }
+    }
+
+    async void ClosePosition(string symbol)
+    {
+        if (await BinanceService.ClosePosition(symbol))
+        {
+            alertColor = Color.Success;
+            AlertContent = $"{symbol}: Se cerró la posición.";
+        }
+        else
+        {
+            alertColor = Color.Danger;
+            AlertContent = $"{symbol}: No se pudo cerrar la posición / No existe posición.";
+        }
+
+        //REFRESCO POSICIONES
+        await GetPositions();
+
+        if (myAlert != null) await myAlert.Show();
+    }
+
+    async Task GetPositions()
+    {
+        Positions.Clear();
+        Positions = await BinanceService.GetPositions(PositionService.Watchlist);
+        StateHasChanged();
+    }
+
+    async void ModalAddWatchlist(string? symbol)
+    {
+        if (symbol != null) PositionService.AddWatchlist(symbol.ToUpper());
+
+        if (modalWatchlist != null) await modalWatchlist.Hide();
+
+        //REFRESCO POSICIONES
+        await GetPositions();
+    }
+
+    private Modal? modalWatchlist;
+    private Modal? modalNewPosition;
+
+    bool side;
+    string size = "30";
+    string PorcentajeStopLoss = "0.95";
+    string PorcentajeTakeProfit = "2.75";
+
+    async void ModalNewPosition(string symbol, bool side, string size, string PorcentajeStopLoss, string PorcentajeTakeProfit)
+    {
+        decimal decimalSize = default;
+        decimal decimalPorcentajeStopLoss = default;
+        decimal decimalPorcentajeTakeProfit = default;
+
+        try
+        {
+            decimalSize = Convert.ToDecimal(size);
+            decimalPorcentajeStopLoss = Convert.ToDecimal(PorcentajeStopLoss);
+            decimalPorcentajeTakeProfit = Convert.ToDecimal(PorcentajeTakeProfit);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.InnerException);
+            if (modalNewPosition != null) await modalNewPosition.Hide();
+        }
+
+        if (await BinanceService.NewPosition(symbol, side, decimalSize, decimalPorcentajeStopLoss, decimalPorcentajeTakeProfit))
+        {
+            alertColor = Color.Success;
+            AlertContent = $"{symbol}: Se abrió la posición.";
+        }
+        else
+        {
+            alertColor = Color.Danger;
+            AlertContent = $"{symbol}: No se pudo abrir la posición.";
+        }
+
+        //REFRESCO POSICIONES
+        await GetPositions();
+
+        if (modalNewPosition != null) await modalNewPosition.Hide();
+
+        if (myAlert != null) myAlert.Show();
+    }
+
+    private async Task DeleteWatchlist(string symbol)
+    {
+        PositionService.DeleteWatchlist(symbol);
+
+        //REFRESCO POSICIONES
+        await GetPositions();
+    }
+}
+

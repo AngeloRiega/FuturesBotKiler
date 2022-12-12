@@ -1,0 +1,47 @@
+﻿@page "/counter"
+
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<p role="status">Current count: @currentCount</p>
+
+<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+
+<EditForm EditContext="@editContext">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <p>
+        <label>
+            Identifier:
+            <InputText @bind-Value="XD" />
+        </label>
+    </p>
+
+    <button type="submit">Submit</button>
+
+    <p>
+        <a href="http://www.startrek.com/">Star Trek</a>,
+        ©1966-2019 CBS Studios, Inc. and
+        <a href="https://www.paramount.com">Paramount Pictures</a>
+    </p>
+</EditForm>
+
+@code {
+    private EditContext? editContext;
+
+    private string XD = "XD";
+
+    protected override void OnInitialized()
+    {
+        editContext = new("ASD");
+    }
+
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+}

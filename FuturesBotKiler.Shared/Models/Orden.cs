@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Binance.Net.Enums;
 
-namespace FuturesBotKiler.Models
+namespace FuturesBotKiler.Shared.Models
 {
     public class Orden
     {

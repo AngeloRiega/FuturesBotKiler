@@ -1,6 +1,7 @@
-﻿using FuturesBotKiler.Models;
+﻿using FuturesBotKiler.Shared.Models;
+using System.Collections.Generic;
 
-namespace FuturesBotKiler
+namespace FuturesBotKiler.Shared
 {
     public class Parametros
     {
@@ -12,11 +13,11 @@ namespace FuturesBotKiler
         public static readonly string BinanceSecretKiler = "GsTbtmXgJCXSWtnQY1iiYLBgJ1lqGOXGVT6h4pKXhv7CjgNEtBwvvBdLhDrCSVa9";
         public static readonly string BinanceKey = "DyeGKozK1THMUZ8SJz7trPBuSbHgHd3fkDvLbSUKOtWzgtJmnJp230TVkvMeHN8e";
         public static readonly string BinanceSecret = "Ocbd7nUXbTeQ1pXXhT0cRymyN5HKkFGceewuy6iadVbzWpKdfmvxwiT3nuT9r85x";
+        public static readonly string BinanceSubKey = "hGkHeJgAEl6F7legsM9ey5UlP7BOBScLNauYdTddVRokhhclwjvL50VENpVSrFEG";
+        public static readonly string BinanceSubSecret = "f6y0y5wGJEkA6uRszdO1JeYfEpBDqoMixelW3IFnlTJOOTIIkL71Tsyu86N4o65e";
 
-        /*FTX*/
-        public static readonly string FTXKeyKiler = "";
-        public static readonly string FTXSecretKiler = "";
-        public static readonly string FTXKey = "Lh79ksICwKW0SZpN3B4xQvzXE3-kGheV1Ia1KZXN";
-        public static readonly string FTXSecret = "ySztKxgWb3eOrT8Z9Ipg_o8U2mH0ZglEmuC7RHYJ";
+        /*Azure*/ /*WEBJOBS_IDLE_TIMEOUT*/
+        public static readonly string WebJobUsername = "$FuturesBotKilerApp";
+        public static readonly string WebJobPassword = "ZrhK7GtWWiAMzbG70NmRafwgjN1WkLqdr0dEFPsPjXblrNq4Z2SLdhpqlJsb";
     }
 }
