@@ -2,10 +2,13 @@
 @inject IBinanceService BinanceService
 @inject IJSRuntime JSRuntime
 @inject PositionService PositionService
+@inject SettingsService SettingsService
 
 <PageTitle>Positions</PageTitle>
 
-<h1 style="color: white">Positions</h1>
+<div class="title">Positions
+<Icon class="fas fa-user-cog" Clicked="() => {modalSettings.Show();}"/>
+</div>
 <br />
 
 <Alert @ref="myAlert" @bind-Color="@alertColor" @bind-Visible="@visibilityAlert" Dismisable>
@@ -14,6 +17,39 @@
     </AlertMessage>
     <CloseButton />
 </Alert>
+
+<Modal @ref="modalSettings">
+    <ModalContent Centered>
+        <Form>
+            <ModalHeader>
+                <ModalTitle>Cambiar preferencias</ModalTitle>
+                <CloseButton />
+            </ModalHeader>
+            <ModalBody>
+                <Field>
+                    <FieldLabel>TP predeterminado: @SettingsService.PorcentajeTakeProfit</FieldLabel>
+                    <TextEdit @bind-Text="SettingsPorcentajeTakeProfit" />
+                </Field>
+                <Field>
+                    <FieldLabel>SL predeterminado: @SettingsService.PorcentajeStopLoss</FieldLabel>
+                    <TextEdit @bind-Text="SettingsPorcentajeStopLoss" />
+                </Field>
+                <Field>
+                    <FieldLabel>Size predeterminado: @SettingsService.Size</FieldLabel>
+                    <TextEdit @bind-Text="SettingsSize" />
+                </Field>
+                <Field>
+                    <FieldLabel>Etapa máxima: @SettingsService.EtapaMaxima</FieldLabel>
+                    <TextEdit @bind-Text="SettingsEtapaMaxima" />
+                </Field>
+            </ModalBody>
+            <ModalFooter>
+                <Button Color="Color.Secondary" Clicked="() => modalSettings.Hide()" Type="ButtonType.Button">Close</Button>
+                <Button Color="Color.Primary" Clicked="(() => ModalSaveSettings(SettingsPorcentajeTakeProfit, SettingsPorcentajeStopLoss, SettingsSize, SettingsEtapaMaxima))" Type="ButtonType.Submit">Save Changes</Button>
+            </ModalFooter>
+        </Form>
+    </ModalContent>
+</Modal>
 
 <Modal @ref="modalWatchlist">
     <ModalContent Centered>
@@ -30,7 +66,7 @@
             </ModalBody>
             <ModalFooter>
                 <Button Color="Color.Secondary" Clicked="() => modalWatchlist.Hide()" Type="ButtonType.Button">Close</Button>
-                <Button Color="Color.Primary" Clicked="(() => ModalAddWatchlist(symbol))" Type="ButtonType.Submit">Save Changes</Button>
+                <Button Color="Color.Primary" Clicked="(() => ModalAddWatchlist(symbol))" Type="ButtonType.Submit">Save</Button>
             </ModalFooter>
         </Form>
     </ModalContent>
@@ -53,12 +89,12 @@
                 </Field>
                 <Field>
                     <FieldLabel>Size</FieldLabel>
-                    <TextEdit @bind-Text="size" Autofocus/>
+                    <TextEdit @bind-Text="Size" Autofocus/>
                 </Field>
                 <Field>
                     <FieldLabel>TP/SL</FieldLabel>
-                    <TextEdit @bind-Text="PorcentajeTakeProfit"/>
-                    <TextEdit @bind-Text="PorcentajeStopLoss"/>
+                    <TextEdit @bind-Text="PorcentajeTakeProfit" />
+                    <TextEdit @bind-Text="PorcentajeStopLoss" />
                 </Field>
             </ModalBody>
             <ModalFooter>
@@ -67,7 +103,7 @@
                     string newPositionButtonText = side == true ? "SELL/SHORT" : "BUY/LONG";
                 }
                 <Button Clicked="() => modalNewPosition.Hide()" Color="Color.Secondary" Type="ButtonType.Button">Close</Button>
-                <Button Clicked="() => ModalNewPosition(symbol, side, size, PorcentajeStopLoss, PorcentajeTakeProfit)" Color="newPositionButtonColor">@newPositionButtonText</Button>
+                <Button Clicked="() => ModalNewPosition(symbol, side, Size, PorcentajeStopLoss, PorcentajeTakeProfit)" Color="newPositionButtonColor">@newPositionButtonText</Button>
             </ModalFooter>
         </Form>
     </ModalContent>
@@ -92,46 +128,45 @@ else
         <br />
 }*@
 
-    <div class="bg-image h-100">
-        <div class="mask d-flex align-items-center h-100">
-            <div class="container">
-                <div class="row justify-content-center">
-                    <div class="col-12">
-                        <div class="card shadow-2-strong">
-                            <div class="card-body p-0">
-                                <div class="table-responsive table-scroll" data-mdb-perfect-scrollbar="true">
-                                    <Table class="table table-dark mb-0">
-                                        <TableHeader Background="Background.Dark">
-                                            <TableRow>
-                                            <TableHeaderCell>Symbol <Icon class="far fa-plus-square" style="cursor: pointer" Clicked="() => {symbol = null; modalWatchlist.Show();}"></Icon></TableHeaderCell>
-                                                <TableHeaderCell>Quantity</TableHeaderCell>
-                                                <TableHeaderCell>Entry Price</TableHeaderCell>
-                                                <TableHeaderCell>Mark Price</TableHeaderCell>
-                                                <TableHeaderCell>PNL</TableHeaderCell>
-                                                <TableHeaderCell></TableHeaderCell>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                        @foreach (var position in Positions)
-                                        {
-                                            string? unrealizedPnlColor = position.unrealizedPnl > 0 && position.unrealizedPnl != 0.0 ? "color: green" : null;
-                                            if (unrealizedPnlColor is null) unrealizedPnlColor = position.unrealizedPnl < 0.0 ? "color: red" : "color: white";
+<div class="bg-image h-100">
+    <div class="mask d-flex align-items-center h-100">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12">
+                    <div class="card shadow-2-strong">
+                        <div class="card-body p-0">
+                            <div class="table-responsive table-scroll" data-mdb-perfect-scrollbar="true">
+                                <Table class="table table-dark mb-0">
+                                    <TableHeader Background="Background.Dark">
+                                        <TableRow>
+                                        <TableHeaderCell>Symbol <Icon class="far fa-plus-square" style="cursor: pointer" Clicked="() => {symbol = null; modalWatchlist.Show();}" /></TableHeaderCell>
+                                            <TableHeaderCell>Quantity</TableHeaderCell>
+                                            <TableHeaderCell>Entry Price</TableHeaderCell>
+                                            <TableHeaderCell>Mark Price</TableHeaderCell>
+                                            <TableHeaderCell>PNL</TableHeaderCell>
+                                            <TableHeaderCell></TableHeaderCell>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                    @foreach (var position in Positions)
+                                    {
+                                        string? unrealizedPnlColor = position.unrealizedPnl > 0 && position.unrealizedPnl != 0.0 ? "color: green" : null;
+                                        if (unrealizedPnlColor is null) unrealizedPnlColor = position.unrealizedPnl < 0.0 ? "color: red" : "color: white";
 
-                                            <TableRow>
-                                                <TableRowCell><Icon class="fas fa-minus" style="cursor: pointer" Clicked="() => DeleteWatchlist(position.symbol)"></Icon> @position.symbol</TableRowCell>
-                                                <TableRowCell>@position.quantity</TableRowCell>
-                                                <TableRowCell>@position.entryPrice</TableRowCell>
-                                                <TableRowCell>@double.Round(@position.markPrice.GetValueOrDefault(), 2)</TableRowCell>
-                                                <TableRowCell style="@unrealizedPnlColor">@double.Round(@position.unrealizedPnl.GetValueOrDefault(), 3)</TableRowCell>
-                                                <TableRowCell style="text-align: center;">
-                                                    <Button Clicked="() => ClosePosition(position.symbol)" Color="Color.Warning" Type="ButtonType.Button">Close</Button>
-                                                    <Button Clicked="() => {symbol = position.symbol; modalNewPosition.Show();}" Color="Color.Primary" Type="ButtonType.Button">Market</Button>
-                                                </TableRowCell>
-                                            </TableRow>
-                                        }
-                                        </TableBody>
-                                    </Table>
-                                </div>
+                                        <TableRow>
+                                            <TableRowCell><Icon class="fas fa-minus" style="cursor: pointer" Clicked="() => DeleteWatchlist(position.symbol)"></Icon> @position.symbol</TableRowCell>
+                                            <TableRowCell>@position.quantity</TableRowCell>
+                                            <TableRowCell>@position.entryPrice</TableRowCell>
+                                            <TableRowCell>@double.Round(@position.markPrice.GetValueOrDefault(), 2)</TableRowCell>
+                                            <TableRowCell style="@unrealizedPnlColor">@double.Round(@position.unrealizedPnl.GetValueOrDefault(), 3)</TableRowCell>
+                                            <TableRowCell style="text-align: center;">
+                                                <Button Clicked="() => ClosePosition(position.symbol)" Color="Color.Warning" Type="ButtonType.Button">Close</Button>
+                                                    <Button Clicked="() => {symbol = position.symbol; ShowModalNewPosition();}" Color="Color.Primary" Type="ButtonType.Button">Market</Button>
+                                            </TableRowCell>
+                                        </TableRow>
+                                    }
+                                    </TableBody>
+                                </Table>
                             </div>
                         </div>
                     </div>
@@ -139,6 +174,7 @@ else
             </div>
         </div>
     </div>
+</div>
 
 @code {
     //Alerta de cerrar posicion.
@@ -200,15 +236,47 @@ else
         await GetPositions();
     }
 
+    string? SettingsSize;
+    string? SettingsPorcentajeStopLoss;
+    string? SettingsPorcentajeTakeProfit;
+    string? SettingsEtapaMaxima;
+
+    async void ShowModalNewPosition()
+    {
+        if (SettingsService.PorcentajeTakeProfit != null) PorcentajeTakeProfit = SettingsService.PorcentajeTakeProfit;
+        if (SettingsService.Size != null) Size = SettingsService.Size;
+        if (SettingsService.PorcentajeStopLoss != null) PorcentajeStopLoss = SettingsService.PorcentajeStopLoss;
+
+        if (modalNewPosition != null) await modalNewPosition.Show();
+    }
+
+    async void ModalSaveSettings(string porcentajeTakeProfit, string porcentajeStopLoss, string size, string etapaMaxima)
+    {
+        //GUARDO EN EL SINGLETON DE SETTINGS
+        SettingsService.PorcentajeTakeProfit = porcentajeTakeProfit;
+        SettingsService.PorcentajeStopLoss = porcentajeStopLoss;
+        SettingsService.Size = size;
+        SettingsService.EtapaMaxima = etapaMaxima;
+
+        //LIMPIO LOS CAMPOS
+        SettingsPorcentajeTakeProfit = default;
+        SettingsPorcentajeStopLoss = default;
+        SettingsSize = default;
+        SettingsEtapaMaxima = default;
+
+        if (modalSettings != null) await modalSettings.Hide();
+    }
+
     private Modal? modalWatchlist;
     private Modal? modalNewPosition;
+    private Modal? modalSettings;
 
     bool side;
-    string size = "30";
-    string PorcentajeStopLoss = "0.95";
-    string PorcentajeTakeProfit = "2.75";
+    string? Size;
+    string? PorcentajeStopLoss;
+    string? PorcentajeTakeProfit;
 
-    async void ModalNewPosition(string symbol, bool side, string size, string PorcentajeStopLoss, string PorcentajeTakeProfit)
+    async void ModalNewPosition(string symbol, bool side, string? size, string? porcentajeStopLoss, string? porcentajeTakeProfit)
     {
         decimal decimalSize = default;
         decimal decimalPorcentajeStopLoss = default;
@@ -216,9 +284,9 @@ else
 
         try
         {
-            decimalSize = Convert.ToDecimal(size);
-            decimalPorcentajeStopLoss = Convert.ToDecimal(PorcentajeStopLoss);
-            decimalPorcentajeTakeProfit = Convert.ToDecimal(PorcentajeTakeProfit);
+            if (size != "") decimalSize = Convert.ToDecimal(size);
+            if (porcentajeStopLoss != "") decimalPorcentajeStopLoss = Convert.ToDecimal(porcentajeStopLoss);
+            if (porcentajeTakeProfit != "") decimalPorcentajeTakeProfit = Convert.ToDecimal(porcentajeTakeProfit);
         }
         catch (Exception ex)
         {

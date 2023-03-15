@@ -39,8 +39,15 @@ thead {
     top: 0;
     position: sticky;
 }
-/*
-h2 {
-    color: brown;
-    font-family: Tahoma, Geneva, Verdana, sans-serif;
-}*/
+
+.title {
+    color: white;
+    text-align: center;
+    font-size: xxx-large;
+    font-weight: bold;
+}
+
+::deep .fa-user-cog {
+    font-size: medium;
+    cursor: pointer;
+}

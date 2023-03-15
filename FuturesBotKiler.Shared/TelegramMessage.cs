@@ -12,17 +12,17 @@ namespace FuturesBotKiler.Shared
 
         public static void Message(string message)
         {
-            botClient = new TelegramBotClient("858641456:AAH83Ju_H7QnC0DtvSHtPDEYlnkNxyApDbY");
+            botClient = new TelegramBotClient(Parametros.TelegramKey);
 
             botClient.SendTextMessageAsync(
                 chatId: 326629231, //YO
                 text: $"1 {message}"
             );
 
-            //botClient.SendTextMessageAsync(
-            //    chatId: 692786235, //KILER
-            //    text: $"{message}"
-            //);
+            botClient.SendTextMessageAsync(
+                chatId: 692786235, //KILER
+                text: $"{message}"
+            );
         }
     }
 }

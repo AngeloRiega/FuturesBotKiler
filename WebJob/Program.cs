@@ -43,11 +43,13 @@ namespace WebJob
 
             BinanceClient.SetDefaultOptions(new BinanceClientOptions
             {
-                ApiCredentials = new ApiCredentials(Parametros.BinanceSubKey, Parametros.BinanceSubSecret)
+                //ApiCredentials = new ApiCredentials(Parametros.BinanceSubKey, Parametros.BinanceSubSecret)
+                ApiCredentials = new ApiCredentials(Parametros.BinanceKeyKiler, Parametros.BinanceSecretKiler)
             });
             BinanceSocketClient.SetDefaultOptions(new BinanceSocketClientOptions
             {
-                ApiCredentials = new ApiCredentials(Parametros.BinanceSubKey, Parametros.BinanceSubSecret)
+                //ApiCredentials = new ApiCredentials(Parametros.BinanceSubKey, Parametros.BinanceSubSecret)
+                ApiCredentials = new ApiCredentials(Parametros.BinanceKeyKiler, Parametros.BinanceSecretKiler)
             });
 
             BinanceClient client = new BinanceClient();
@@ -55,13 +57,18 @@ namespace WebJob
 
             if (listenKey.Success)
             {
-                TelegramMessage.Message($"listenKey.Success");
+                //TelegramMessage.Message($"listenKey.Success");
 
                 BinanceSocketClient socketClient = new BinanceSocketClient();
                 var sub = await socketClient.UsdFuturesStreams.SubscribeToUserDataUpdatesAsync(listenKey.Data, null, null, null,
                 onOrderUpdate: async data =>
                 {
                     // Handle order update
+                    //PRUEBA
+                    TelegramMessage.Message($"Handle order update " +
+                                            $"data.Data.UpdateData.Type: {data.Data.UpdateData.Type}" +
+                                            $"data.Data.UpdateData.Status: {data.Data.UpdateData.Status}" +
+                                            $"DATE:" + DateTime.Now);
 
                     //SI LA ORDEN DE STOP LOSS SE COMPLETO Y ES UNA DEL BOT, PASO A LA SIGUIENTE ETAPA 
                     if (data.Data.UpdateData.Type == FuturesOrderType.StopMarket && data.Data.UpdateData.Status == OrderStatus.Expired) //CAMBIAR POR EXPIRED / CANCELED
@@ -129,10 +136,10 @@ namespace WebJob
                     }
 
                     //PRUEBA
-                    if (data.Data.UpdateData.Type == FuturesOrderType.StopMarket && data.Data.UpdateData.Status == OrderStatus.Canceled) //CAMBIAR POR EXPIRED / CANCELED
-                    {
-                        var ordersData = await client.UsdFuturesApi.Trading.GetOrdersAsync("BTCUSDT");
-                    }
+                    //if (data.Data.UpdateData.Type == FuturesOrderType.StopMarket && data.Data.UpdateData.Status == OrderStatus.Canceled) //CAMBIAR POR EXPIRED / CANCELED
+                    //{
+                    //    var ordersData = await client.UsdFuturesApi.Trading.GetOrdersAsync("BTCUSDT");
+                    //}
                 },
                 data =>
                 {
@@ -148,10 +155,10 @@ namespace WebJob
                 {
                     await client.UsdFuturesApi.Account.KeepAliveUserStreamAsync(listenKey.Data);
                     Console.WriteLine($"SE REINICIÓ EL LISTENKEY {DateTime.Now}");
-                    TelegramMessage.Message($"ESPERANDO (SE REINICIÓ EL LISTENKEY {DateTime.Now})");
+                    //TelegramMessage.Message($"ESPERANDO (SE REINICIÓ EL LISTENKEY {DateTime.Now})");
                 };
                 timer.Start();
-                TelegramMessage.Message(timer.Enabled.ToString());
+                //TelegramMessage.Message(timer.Enabled.ToString());
             }
             else
             {

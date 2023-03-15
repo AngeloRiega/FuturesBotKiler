@@ -42,7 +42,7 @@ static void ConfigureServices(IServiceCollection services)
     services.AddHttpClient("futuresbotkiler", c =>
     {
         c.BaseAddress = new Uri("https://futuresbotkilerapp.azurewebsites.net/");
-        //c.BaseAddress = new Uri("http://localhost:5207/");
+        //c.BaseAddress = new Uri("https://localhost:7250/");
     });
     services
         .AddBlazorise(options =>
@@ -52,4 +52,11 @@ static void ConfigureServices(IServiceCollection services)
         .AddBootstrap5Providers()
         .AddFontAwesomeIcons();
     services.AddSingleton<PositionService>();
+    services.AddSingleton<SettingsService>();
+    services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true; });
+    //services.AddSignalR().AddAzureSignalR(options =>
+    //{
+    //    options.ServerStickyMode =
+    //        Microsoft.Azure.SignalR.ServerStickyMode.Required;
+    //});
 }

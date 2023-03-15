@@ -28,7 +28,7 @@ using FuturesBotKiler.Shared;
 
 namespace FuturesBotKiler
 {
-    public class Program
+    /*public class Program2
     {
         public static async Task Main(string[] args)
         {
@@ -443,5 +443,5 @@ namespace FuturesBotKiler
                 {
                     webBuilder.UseStartup<Startup>();
                 });
-    }
+    }*/
 }

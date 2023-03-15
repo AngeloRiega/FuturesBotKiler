@@ -4,7 +4,7 @@
     {
         public List<string> Watchlist = new List<string>();
 
-        //TODO: NO REPETIDOS EN EL WATCHLIST
+        //TODO: NO REPETIDOS EN EL WATCHLIST (PASARLO A DICCIONARIO)
 
         public void AddWatchlist(string symbol)
         {
