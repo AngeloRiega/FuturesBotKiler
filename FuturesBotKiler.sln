@@ -5,11 +5,11 @@ VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebJob", "WebJob\WebJob.csproj", "{FED2C1AA-E644-435F-87BF-DD1752820CDD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmptyBlazorApp1", "EmptyBlazorApp1\EmptyBlazorApp1.csproj", "{7ABCBD89-4F8B-4986-B4BB-04CDEA8CDDEC}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FuturesBotKiler.Shared", "FuturesBotKiler.Shared\FuturesBotKiler.Shared.csproj", "{D59A2CF3-969C-484D-AEC8-AE09AE6408D6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FuturesBotKiler.Api", "FuturesBotKiler.Api\FuturesBotKiler.Api.csproj", "{E4740520-1BAB-4DE5-9F3D-95BB7AF9B6D6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FuturesBotKiler.Api", "FuturesBotKiler.Api\FuturesBotKiler.Api.csproj", "{E4740520-1BAB-4DE5-9F3D-95BB7AF9B6D6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FuturesBotKiler.Blazor", "FuturesBotKiler.Blazor\FuturesBotKiler.Blazor.csproj", "{AD66CD1B-9C26-4EFE-B7E1-5BA4716B5A53}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,10 +21,6 @@ Global
 		{FED2C1AA-E644-435F-87BF-DD1752820CDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FED2C1AA-E644-435F-87BF-DD1752820CDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FED2C1AA-E644-435F-87BF-DD1752820CDD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7ABCBD89-4F8B-4986-B4BB-04CDEA8CDDEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7ABCBD89-4F8B-4986-B4BB-04CDEA8CDDEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7ABCBD89-4F8B-4986-B4BB-04CDEA8CDDEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7ABCBD89-4F8B-4986-B4BB-04CDEA8CDDEC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D59A2CF3-969C-484D-AEC8-AE09AE6408D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D59A2CF3-969C-484D-AEC8-AE09AE6408D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D59A2CF3-969C-484D-AEC8-AE09AE6408D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -33,6 +29,10 @@ Global
 		{E4740520-1BAB-4DE5-9F3D-95BB7AF9B6D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4740520-1BAB-4DE5-9F3D-95BB7AF9B6D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4740520-1BAB-4DE5-9F3D-95BB7AF9B6D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD66CD1B-9C26-4EFE-B7E1-5BA4716B5A53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD66CD1B-9C26-4EFE-B7E1-5BA4716B5A53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD66CD1B-9C26-4EFE-B7E1-5BA4716B5A53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD66CD1B-9C26-4EFE-B7E1-5BA4716B5A53}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
